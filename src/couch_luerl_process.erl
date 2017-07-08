@@ -111,11 +111,11 @@ run(#evstate{ddocs=DDocs}, [<<"reset">>]) ->
     {#evstate{ddocs=DDocs, lua_state=LuaState}, true};
 run(#evstate{ddocs=DDocs}, [<<"reset">>, QueryConfig]) ->
     LuaState = luerl:init(),
-    {#evstate{ddocs=DDocs, lua_state=luerl:init(), query_config=QueryConfig}, true};
+    {#evstate{ddocs=DDocs, lua_state=LuaState, query_config=QueryConfig}, true};
 run(#evstate{funs=Chunks, lua_state=LuaState}=State, [<<"add_fun">> , BinFunc]) ->
     {Sig, Chunk, _NewLuaState} = makefun(LuaState, BinFunc),
     {State#evstate{ funs=Chunks++[{Sig,Chunk}] }, true};
-run(#evstate{lua_state=LuaState}=State, [<<"map_doc">> , Doc]) ->
+run(State, [<<"map_doc">> , Doc]) ->
     {State, catch mapping(State, Doc)};
 run(State, [<<"reduce">>, Funs, KVs]) ->
     {State, catch reduce(State, Funs, KVs, false)};
@@ -137,13 +137,11 @@ load_ddoc(DDocs, DDocId) ->
 
 bindings(State, Sig) ->
     bindings(State, Sig, nil).
-bindings(#evstate{lua_state=LSt0}, Sig, DDoc) ->
-    _Self = self(),
-
+bindings(#evstate{lua_state=LSt0}, Sig, _DDoc) ->
     % Elixir example:
     % state1 = :luerl.set_table([:inc], fn ([val], state) -> {[val + 1], state} end, state)
 
-    LSt1 = luerl:set_table([log], fun([Msg], State) ->
+    LSt1 = luerl:set_table([log], fun([Msg], _State) ->
         couch_log:info(Msg, [])
     end, LSt0),
 
@@ -158,7 +156,7 @@ bindings(#evstate{lua_state=LSt0}, Sig, DDoc) ->
 makefun(State, Source) ->
     Sig = couch_crypto:hash(md5, Source),
     LuaStateBound = bindings(State, Sig),
-    {Chunk, LuaState} = compilefun(LuaStateBound, Source),
+    {Chunk, _LuaState} = compilefun(LuaStateBound, Source),
     {Sig, Chunk, LuaStateBound}.
 makefun(State, Source, {DDoc}) ->
     Sig = couch_crypto:hash(md5, lists:flatten([Source, term_to_binary(DDoc)])),
@@ -180,7 +178,7 @@ compilefun(LuaState, Source) ->
 
 % Handle performing map/reduce requests
 mapping(#evstate{funs=MapFuns, lua_state=LuaState}, Doc) ->
-  Resp = lists:map(fun({Sig, Chunk}) ->
+  lists:map(fun({Sig, Chunk}) ->
       erlang:put(Sig, []),
       % Execute Lua Chunk (akak Form / Function )
       luerl:call_chunk(Chunk, Doc, LuaState),
@@ -206,7 +204,7 @@ reduce(State, BinFun, KVs, ReReduce) ->
     end, {[], []}, KVs),
     Keys2 = lists:reverse(Keys),
     Vals2 = lists:reverse(Vals),
-    reduce(State, [BinFun], Keys, Vals, ReReduce).
+    reduce(State, [BinFun], Keys2, Vals2, ReReduce).
 
 
 % Convert various data forms to appropriate binary form
