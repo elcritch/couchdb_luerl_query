@@ -44,4 +44,3 @@ release :couchdb_luerl_query do
     :runtime_tools
   ]
 end
-
