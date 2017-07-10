@@ -13,13 +13,20 @@ defmodule CouchdbLuerlQuery.Mixfile do
   end
 
   # Configuration for the OTP application
-  #
-  # Type "mix help compile.app" for more information
-  def application do
+  def application, do: application(Mix.env)
+
+  def application(:test) do
     # Specify extra applications you'll use from Erlang/Elixir
     [extra_applications: [
       :logger,
-      :couchdb_mixapp
+      :couchdb_mixapp,
+    ]]
+  end
+
+  def application(_other) do
+    # Specify extra applications you'll use from Erlang/Elixir
+    [extra_applications: [
+      :logger,
     ]]
   end
 
