@@ -17,10 +17,12 @@ defmodule CouchdbLuerlQuery.Mixfile do
 
   def application(:test) do
     # Specify extra applications you'll use from Erlang/Elixir
-    [extra_applications: [
-      :logger,
-      :couchdb_mixapp,
-    ]]
+    testapps = case Mix.env do
+      :test -> [:couchdb_mixapp]
+      _ -> []
+    end
+
+    [extra_applications: [ :logger ] ++ testapps]
   end
 
   def application(_other) do
