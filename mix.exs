@@ -34,7 +34,8 @@ defmodule CouchdbLuerlQuery.Mixfile do
       {:luerl, "~> 0.3.0"},
       # {:couchdb, github: "elcritch/couchdb-embedded", branch: "2.1.x-nocouchjs", manager: :rebar, app: false},
       {:couchdb_mixapp, "~> 0.2.0", github: "elcritch/couchdb_mixapp", runtime: false},
-      # {:mix_erlang_tasks, "0.1.0"}
+      {:mix_erlang_tasks, "0.1.0"},
+      {:distillery, "~> 1.4.1"},
     ]
   end
 end
